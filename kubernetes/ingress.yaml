@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: main
+  labels:
+    name: main
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: knp.services
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: knp-a
+            port: 
+              name: http

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: knp-d
+spec:
+  selector:
+    app: knp-d
+  ports:
+  - port: 80
+    targetPort: http

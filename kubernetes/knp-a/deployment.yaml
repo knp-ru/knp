@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: knp-a
+spec:
+  selector:
+    matchLabels:
+      app: knp-a
+  template:
+    metadata:
+      name: knp-a
+      labels:
+        app: knp-a
+    spec:
+      enableServiceLinks: false
+      containers:
+      - name: knp-a
+        image: yardenshoham/knp
+        env:
+        - name: RETURN_VALUE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: DEPENDENCIES
+          value: '{"destinations":[{"target":"http://knp-b/load","request_payload_kb_size":50,"config":{"memory_params":{"duration_seconds":0.2,"kb_count":50},"cpu_params":{"duration_seconds":0.2,"load":0.2}}},{"target":"http://knp-c/load","request_payload_kb_size":50,"config":{"memory_params":{"duration_seconds":0.2,"kb_count":50},"cpu_params":{"duration_seconds":0.2,"load":0.2}}}]}'
+        ports:
+        - name: http
+          containerPort: 8081
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          periodSeconds: 85
+        resources:
+          requests:
+            cpu: 200m
+            memory: 24Mi
+          limits:
+            cpu: 1000m
+            memory: 512Mi

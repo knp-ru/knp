@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: knp-d
+spec:
+  selector:
+    matchLabels:
+      app: knp-d
+  template:
+    metadata:
+      name: knp-d
+      labels:
+        app: knp-d
+    spec:
+      enableServiceLinks: false
+      containers:
+      - name: knp-d
+        image: yardenshoham/knp
+        env:
+        - name: RETURN_VALUE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        ports:
+        - name: http
+          containerPort: 8081
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          periodSeconds: 85
+        resources:
+          requests:
+            cpu: 200m
+            memory: 24Mi
+          limits:
+            cpu: 1000m
+            memory: 512Mi
