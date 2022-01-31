@@ -4,5 +4,5 @@ time_off: 60 # time to turn off attack
 wait_between_requests: 0 # in secs
 server_dst: "http://localhost:8080"
 logging:
-  level: "INFO"
+  level: "DEBUG"
   log_name: "ddoser.attack"

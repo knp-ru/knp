@@ -1,5 +1,4 @@
 import asyncio
-import math
 import time
 from datetime import datetime
 import aiohttp
@@ -51,28 +50,29 @@ class Attacker(mp.Process):
                 self._failed_sent_per_session[self._current_session_time] += 1
             self._sent_per_session[self._current_session_time] += 1
 
-    def send_requests(self, max_time):
+    async def send_requests(self, max_time):
         st_time = time.time()
         end_time = st_time + max_time
         sess = aiohttp.ClientSession()
+        tasks = []
         while time.time() < end_time and not self.kill:
-            self._loop.run_until_complete(self.send_request(sess))
-            if self._wait_between_requests > 0:
-                self._loop.run_until_complete(asyncio.sleep(self._wait_between_requests))
-        self._loop.run_until_complete(sess.close())
+            tasks.append(asyncio.create_task(self.send_request(sess)))
+            await asyncio.sleep(self._wait_between_requests)
+        tasks.append(asyncio.create_task(sess.close()))
 
     def attack_on(self):
         self._current_session_time = datetime.now().strftime('%H:%m:%S')
         self._sent_per_session[self._current_session_time] = 0
         self._failed_sent_per_session[self._current_session_time] = 0
         self.logger.debug(f"start time: {datetime.now().strftime('%H:%m:%S')}")
-        self.send_requests(self._time_on)
+        asyncio.run(self.send_requests(self._time_on))
 
     def attack_off(self):
         st_time = time.time()
         end_time = st_time + self._time_off
         while time.time() < end_time and not self.kill:
-            time.sleep(1)
+            # So kill could be relatively quick
+            time.sleep(0.1)
 
     def attack_session(self):
         self.attack_on()
