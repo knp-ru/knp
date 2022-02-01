@@ -6,4 +6,4 @@ if [[ "${PWD##*/}" != "ddoser" ]]; then
     exit 1
 fi
 
-docker build -t ahartanu/ddoser:1.1 .
+docker build -t ahartanu/ddoser:1.2 .

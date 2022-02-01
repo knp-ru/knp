@@ -1,8 +1,14 @@
-threads: 300  # simulate users
+threads: 30  # simulate users
 time_on: 60 # time to run attack
 time_off: 60 # time to turn off attack
 wait_between_requests: 0 # in secs
-server_dst: "http://localhost:8080"
+request:
+  server_url: "http://localhost:8080" # http://knp.services/load - use carefully
+  method: post
+  headers:
+    Content-Type: "application/json"
+  data:
+    cpu_params: {"load": 0.8, "duration_seconds": 10}
 logging:
   level: "DEBUG"
   log_name: "ddoser.attack"

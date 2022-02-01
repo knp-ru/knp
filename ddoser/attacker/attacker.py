@@ -19,8 +19,11 @@ class Attacker(mp.Process):
         self._report_queue = config.get("report_queue")
         self._start_attack_event = start_attack_event
         self._kill_event = kill_event
-        self._server_dst = config.get("server_dst", "http://localhost:8075")
-        self._url_dst = f"{self._server_dst}/{self.name.lower().replace('-','')}"
+        self._request_config = config.get("request", {})
+        self._server_dst = self._request_config.get("server_url", "http://localhost:8080")
+        self._request_method = self._request_config.get("method", "get")
+        self._request_headers = self._request_config.get("headers", {})
+        self._request_data = self._request_config.get("data", {})
         self._loop = None
         self._sent_per_session = OrderedDict()
         self._failed_sent_per_session = OrderedDict()
@@ -44,7 +47,7 @@ class Attacker(mp.Process):
         self._report_queue.put(report)
 
     async def send_request(self, session):
-        async with session.get(self._url_dst) as resp:
+        async with session.request("get", self._server_dst, headers=self._request_headers, json=self._request_data) as resp:
             status_code = resp.status
             if status_code != 200:
                 self._failed_sent_per_session[self._current_session_time] += 1
