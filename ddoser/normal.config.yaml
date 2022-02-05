@@ -3,12 +3,12 @@ time_on: 2 # time to run attack
 time_off: 0 # time to turn off attack
 wait_between_requests: 2 # in secs
 request:
-  server_url: "http://http://knp.services/load"
+  server_url: "http://knp.services/load"
   method: post
   headers:
     Content-Type: "application/json"
   data:
-    cpu_params: {"load": 0.8, "duration_seconds": 10}
+    cpu_params: {"load": 0.2, "duration_seconds": 1}
 logging:
   level: "DEBUG"
   log_name: "ddoser.normal"

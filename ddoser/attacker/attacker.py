@@ -47,8 +47,9 @@ class Attacker(mp.Process):
         self._report_queue.put(report)
 
     async def send_request(self, session):
-        async with session.request("get", self._server_dst, headers=self._request_headers, json=self._request_data) as resp:
+        async with session.request(self._request_method, self._server_dst, headers=self._request_headers, json=self._request_data) as resp:
             status_code = resp.status
+            self.logger.debug(status_code)
             if status_code != 200:
                 self._failed_sent_per_session[self._current_session_time] += 1
             self._sent_per_session[self._current_session_time] += 1
@@ -61,6 +62,9 @@ class Attacker(mp.Process):
         while time.time() < end_time and not self.kill:
             tasks.append(asyncio.create_task(self.send_request(sess)))
             await asyncio.sleep(self._wait_between_requests)
+        await asyncio.wait(tasks)
+        all_tasks_done = all(map(lambda t: t.done(), tasks))
+        self.logger.debug(f"All tasks done: {all_tasks_done}")
         tasks.append(asyncio.create_task(sess.close()))
 
     def attack_on(self):
