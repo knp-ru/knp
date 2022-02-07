@@ -1,14 +1,14 @@
 threads: 10  # simulate users
-time_on: 60 # time to run attack
-time_off: 60 # time to turn off attack
-wait_between_requests: 2 # in secs
+time_on: 300 # time to run attack
+time_off: 300 # time to turn off attack
+wait_between_requests: 1 # in secs
 request:
   server_url: "http://knp.services/load" # - use carefully
   method: post
   headers:
     Content-Type: "application/json"
   data:
-    cpu_params: {"load": 0.2, "duration_seconds": 1}
+    cpu_params: {"load": 0.2, "duration_seconds": 0.8}
 logging:
   level: "DEBUG"
   log_name: "ddoser.attack"
