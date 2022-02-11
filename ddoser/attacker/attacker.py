@@ -47,7 +47,7 @@ class Attacker(mp.Process):
         self._report_queue.put(report)
 
     async def send_request(self, session):
-        async with session.request(self._request_method, self._server_dst, headers=self._request_headers, json=self._request_data) as resp:
+        async with session.request(self._request_method, self._server_dst, headers=self._request_headers, json=self._request_data, timeout=200) as resp:
             status_code = resp.status
             self.logger.debug(status_code)
             if status_code != 200:
@@ -62,9 +62,12 @@ class Attacker(mp.Process):
         while time.time() < end_time and not self.kill:
             tasks.append(asyncio.create_task(self.send_request(sess)))
             await asyncio.sleep(self._wait_between_requests)
-        await asyncio.wait(tasks)
-        all_tasks_done = all(map(lambda t: t.done(), tasks))
-        self.logger.debug(f"All tasks done: {all_tasks_done}")
+        num_of_remained_tasks = len(list(filter(lambda t: not t.done(), tasks)))
+        self.logger.debug(f"Canceling remained tasks ({num_of_remained_tasks} tasks)..")
+        list(map(lambda t: t.cancel(), tasks))
+        # await asyncio.wait(tasks)
+        # all_tasks_done = all(map(lambda t: t.done(), tasks))
+        # self.logger.debug(f"All tasks done: {all_tasks_done}")
         tasks.append(asyncio.create_task(sess.close()))
 
     def attack_on(self):
@@ -91,7 +94,7 @@ class Attacker(mp.Process):
         self.logger.info("Starting yoyo attack..")
         self._loop = asyncio.get_event_loop()
         num_sessions = 0
-        self._start_attack_event.wait() # wait for all processes to start
+        self._start_attack_event.wait()  # wait for all processes to start
         while not self.kill:
             self.attack_session()
             num_sessions += 1
