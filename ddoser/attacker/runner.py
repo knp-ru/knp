@@ -3,6 +3,7 @@ import time
 import yaml
 import signal
 from .attacker import Attacker
+from .attacker_sync import AttackerSync
 from .reporter import Reporter
 import logging
 import multiprocessing as mp
@@ -21,7 +22,7 @@ class AttackRunner:
         self._config['report_queue'] = mp.Queue()
         signal.signal(signal.SIGINT, self.exit_gracefully)
         signal.signal(signal.SIGTERM, self.exit_gracefully)
-        self._attackers = [Attacker(self._config, self._start_attack_event, self._kill_event) for _ in range(self._num_ps)]
+        self._attackers = [AttackerSync(self._config, self._start_attack_event, self._kill_event) for _ in range(self._num_ps)]
 
     def exit_gracefully(self, signum, frame):
         self._kill_event.set()
