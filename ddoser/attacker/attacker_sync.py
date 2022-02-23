@@ -54,6 +54,7 @@ class AttackerSync(mp.Process):
                                    json=self._request_data)
             self.logger.debug(req.status_code)
             statuses.append(req.status_code)
+            self._sent_per_session[self._current_session_time] += 1
             time.sleep(self._wait_between_requests)
 
     def attack_on(self):

@@ -65,9 +65,6 @@ class Attacker(mp.Process):
         num_of_remained_tasks = len(list(filter(lambda t: not t.done(), tasks)))
         self.logger.info(f"Canceling remained tasks ({num_of_remained_tasks} tasks)..")
         list(map(lambda t: t.cancel(), tasks))
-        # await asyncio.wait(tasks)
-        # all_tasks_done = all(map(lambda t: t.done(), tasks))
-        # self.logger.debug(f"All tasks done: {all_tasks_done}")
         tasks.append(asyncio.create_task(sess.close()))
 
     def attack_on(self):
